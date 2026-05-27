@@ -97,15 +97,17 @@ class PlantGameScreen extends FlameGame {
 
     add(Background());
 
-    // Botón de debug para avanzar tiempo (solo visible en modo debug)
-    final debugTimeButton = _DebugTimeButton(
-      gameRef: this,
-      onAdvance: (minutes) async {
-        final controller = Provider.of<PlantController>(context, listen: false);
-        await controller.debugAdvanceTime(minutes);
-      },
-    )..priority = 100;
-    add(debugTimeButton);
+    // Botón de debug — solo se agrega en builds de desarrollo
+    if (kDebugMode) {
+      final debugTimeButton = _DebugTimeButton(
+        gameRef: this,
+        onAdvance: (minutes) async {
+          final controller = Provider.of<PlantController>(context, listen: false);
+          await controller.debugAdvanceTime(minutes);
+        },
+      )..priority = 100;
+      add(debugTimeButton);
+    }
 
     final helpButton = Button_help(onPressed: () { });
 
