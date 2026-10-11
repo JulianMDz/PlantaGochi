@@ -15,7 +15,11 @@ llévala de semilla a **ENT**. Tu jardín se sincroniza con un mundo 3D en Unity
 ![Unity](https://img.shields.io/badge/Unity-3D%20sync-000000?logo=unity&logoColor=white)
 ![Plataforma](https://img.shields.io/badge/plataforma-Android-3DDC84?logo=android&logoColor=white)
 
-<img src="frontend/assets/images/Escenarios/Escenario_Opcion_05.png" width="720" alt="Escenario del juego" />
+<img src="docs/screenshots/main.png" width="760" alt="Pantalla principal: un Mangle en fase ENT con las barras de recursos llenas" />
+
+| ☀️ Aplicando sol | 🎒 Inventario |
+|:---:|:---:|
+| <img src="docs/screenshots/sun.png" width="370" alt="Animación de aplicar sol sobre un Aliso" /> | <img src="docs/screenshots/inventory.png" width="370" alt="Inventario con las plantas del jugador" /> |
 
 </div>
 
@@ -206,7 +210,7 @@ flutter test
 | `plant_controller_test.dart` | Aplicar recursos, capacidad por fase, evolución, composta → fertilizante, decay y muerte, cooldowns, guardado y carga |
 | `plant_catalog_test.dart` | Clasificación de especies y resolución de sprites (variantes, archivos con autor, fallback a Pasto) |
 | `minigame_logic_test.dart` | Recompensas de los minijuegos de sol, agua y composta |
-| `effect_sheets_test.dart` | Que cada animación coincide con su sprite sheet y no supera 4096 px |
+| `effect_sheets_test.dart` | Que cada animación y cada planta coincide con el formato de su sprite sheet y no supera 4096 px |
 
 ---
 
@@ -214,9 +218,9 @@ flutter test
 
 **Una planta nueva o una variante**
 
-1. Crea `frontend/assets/images/Planta/<Especie><N>/` con `fase1_ss.png` … `fase4_ss.png`
-   (18 frames de 500×500 en una fila). La fase 4 puede llevar el autor delante:
-   `Especie_Nombre_Apellido_fase4_ss.png`.
+1. Crea `frontend/assets/images/Planta/<Especie><N>/` con `fase1_ss.png` … `fase4_ss.png`:
+   18 frames de 500×500 en una **cuadrícula de 6 columnas × 3 filas** (3000×1500 px).
+   La fase 4 puede llevar el autor delante: `Especie_Nombre_Apellido_fase4_ss.png`.
 2. Añade la carpeta a la lista de `assets` de `pubspec.yaml` (Flutter no incluye
    subcarpetas automáticamente).
 3. Si es una especie nueva, regístrala en `lib/models/plant_catalog.dart` con su tipo.
@@ -225,7 +229,9 @@ flutter test
 
 Empaqueta los frames de 500×500 en una cuadrícula de **8 columnas** (máximo 4000 px de
 ancho) y añade una entrada en `GameEffect` (`components/effect_animation.dart`).
-Los sheets de una sola fila de más de ~8000 px no se dibujan en muchos móviles.
+
+> ⚠️ **No uses sheets de una sola fila.** Muchas GPUs móviles no cargan texturas de más
+> de 8192 px y el sprite simplemente no aparece. `flutter test` lo comprueba.
 
 ---
 

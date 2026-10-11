@@ -319,7 +319,7 @@ class PlantGameScreen extends FlameGame {
     if (plant.id != _lastPlantType || fase != _lastPlantFase) {
       _lastPlantType = plant.id;
       _lastPlantFase = fase;
-      _panelTitle.setTitle(plant.id.toUpperCase());
+      _panelTitle.setTitle(PlantCatalog.displayName(plant.id));
       _plant.updatePlant(plant.id, _stageOf(fase));
       _setStateEffect(null); // re-evaluar el estado de la nueva planta
     }
