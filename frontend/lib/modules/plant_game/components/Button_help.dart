@@ -89,8 +89,6 @@ class _HelpOverlay extends PositionComponent with TapCallbacks, DragCallbacks {
     // Recortar la imagen al área visible usando canvas directamente
     // Se dibuja un rectángulo opaco arriba y abajo del área visible
     // para tapar lo que se sale
-    final paint = Paint()..color = const Color(0x00000000);
-
     // Clip manual — tapa lo que sobresale arriba
     canvas.drawRect(
       Rect.fromLTWH(0, 0, gameRef.size.x, _panelY),

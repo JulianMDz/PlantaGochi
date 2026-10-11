@@ -3,10 +3,7 @@ import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import 'package:frontend/core/audio.dart';
 
 class ButtonEnter extends SpriteButtonComponent {

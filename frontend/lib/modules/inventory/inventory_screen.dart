@@ -8,16 +8,17 @@ import 'package:frontend/modules/inventory/components/filter_panel.dart';
 import 'package:frontend/modules/inventory/components/image_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/models/plant_catalog.dart';
+import 'package:frontend/models/tree_models.dart';
 import 'package:frontend/modules/plant_game/plant_controller.dart';
 
 class InventoryScreen extends FlameGame with DragCallbacks {
   final BuildContext context;
-  final int? initialSelectedIndex;
 
-  InventoryScreen(this.context, {this.initialSelectedIndex});
+  InventoryScreen(this.context);
 
   PlantController? _controller;
-  int _selectedPlantIndex = -1;
+  TreePlanta? _selectedPlant;
   List<PositionComponent> _plantSlots = [];
 
   String? _filterCategory;
@@ -28,90 +29,27 @@ class InventoryScreen extends FlameGame with DragCallbacks {
   double _scrollOffsetY = 0;
   double _maxScrollY = 0;
   bool _isDragging = false;
-  double _dragDistance = 0;
 
   // Constantes de layout compartidas
   static const double _collapsedH = 56.0;
   static const double _marginTop = 42.0;
   static const int _columns = 3;
 
-  static const Map<String, List<String>> _plantTypeFolders = {
-    'pasto': ['Pasto'],
-    'solar': ['Cajeto', 'Espino', 'Drago', 'Alcaparro', 'Alcaparro grande'],
-    'hidro': ['Aliso', 'Cedrillo', 'Cucharo'],
-    'xerofito': ['Alcaparro enano', 'Dividivi'],
-    'montana': ['Roble', 'Pino romerón', 'Nogal', 'Duraznillo'],
-    'templado': ['Manzano', 'Mangle', 'Sietecueros', 'Cedro'],
-  };
+  /// Sprite-sheet resuelto (y ya en caché) de cada planta, por instanceId.
+  final Map<String, String> _spritePaths = {};
 
-  String _getPlantImagePath(String plantId, String fase) {
-    String faseNum;
-    switch (fase) {
-      case 'semilla': faseNum = '1'; break;
-      case 'arbusto': faseNum = '2'; break;
-      case 'planta':  faseNum = '3'; break;
-      case 'ent':     faseNum = '4'; break;
-      default:        faseNum = '2';
-    }
-
-    final tryPath = 'Planta/$plantId/fase${faseNum}_ss.png';
-    try {
-      images.fromCache(tryPath);
-      return tryPath;
-    } catch (e) {
-      final lowerId = plantId.toLowerCase();
-      for (final folders in _plantTypeFolders.values) {
-        for (final folder in folders) {
-          if (lowerId.contains(folder.toLowerCase()) ||
-              folder.toLowerCase().contains(lowerId)) {
-            final basePath = 'Planta/$folder/fase${faseNum}_ss.png';
-            try {
-              images.fromCache(basePath);
-              return basePath;
-            } catch (_) {
-              for (int i = 1; i <= 12; i++) {
-                final varPath = 'Planta/$folder$i/fase${faseNum}_ss.png';
-                try {
-                  images.fromCache(varPath);
-                  return varPath;
-                } catch (_) {}
-              }
-            }
-          }
-        }
-      }
-    }
-    return 'Planta/Pasto/fase${faseNum}_ss.png';
-  }
-
-  String _getPlantDisplayName(String plantId) {
-    final lowerId = plantId.toLowerCase();
-    if (lowerId.contains('pasto')) return 'PASTO';
-    if (lowerId.contains('alcaparro enano')) return 'ALCAPARRO ENANO';
-    if (lowerId.contains('alcaparro')) return 'ALCAPARRO';
-    if (lowerId.contains('cajeto')) return 'CAJETO';
-    if (lowerId.contains('espino')) return 'ESPINO';
-    if (lowerId.contains('drago')) return 'DRAGO';
-    if (lowerId.contains('roble')) return 'ROBLE';
-    if (lowerId.contains('pino')) return 'PINO ROMERÓN';
-    if (lowerId.contains('nogal')) return 'NOGAL';
-    if (lowerId.contains('duraznillo')) return 'DURAZNILLO';
-    if (lowerId.contains('manzano')) return 'MANZANO';
-    if (lowerId.contains('mangle')) return 'MANGLE';
-    if (lowerId.contains('sietecueros')) return 'SIETECUEROS';
-    if (lowerId.contains('cedro')) return 'CEDRO';
-    if (lowerId.contains('cedrillo')) return 'CEDRILLO';
-    if (lowerId.contains('aliso')) return 'ALISO';
-    if (lowerId.contains('dividivi')) return 'DIVIDIVI';
-    return plantId.toUpperCase();
+  /// Primer frame del sprite-sheet de la planta (precargado en [onLoad]).
+  Sprite _plantSprite(TreePlanta plant) {
+    final img = images.fromCache(
+        _spritePaths[plant.instanceId] ?? 'Planta/Pasto/fase2_ss.png');
+    return Sprite(img, srcSize: Vector2(img.width / 18, img.height.toDouble()));
   }
 
   @override
   Future<void> onLoad() async {
-    _selectedPlantIndex = initialSelectedIndex ?? -1;
-
     final ctx = context;
     _controller = Provider.of<PlantController>(ctx, listen: false);
+    _selectedPlant = _controller?.activePlant;
 
     await images.loadAll([
       'Paneles/Fondo_Inv_01.png',
@@ -145,18 +83,11 @@ class InventoryScreen extends FlameGame with DragCallbacks {
 
     await AudioManager.musicaInventario();
 
-    final plantsToLoad = _controller?.plants ?? [];
-    for (final plant in plantsToLoad) {
-      final plantId = plant.id;
-      final fase = plant.estado.fase;
-      final faseNum = _faseToNum(fase);
-      final candidates = _buildImageCandidates(plantId, faseNum);
-      for (final path in candidates) {
-        try {
-          await images.load(path);
-          break;
-        } catch (_) {}
-      }
+    for (final plant in _controller?.plants ?? <TreePlanta>[]) {
+      final path = await PlantCatalog.spritePath(
+          plant.id, phaseNumber(plant.estado.fase));
+      await images.load(path);
+      _spritePaths[plant.instanceId] = path;
     }
 
     add(SpriteComponent()
@@ -174,58 +105,8 @@ class InventoryScreen extends FlameGame with DragCallbacks {
     _loadPlantSlots();
   }
 
-  static String _faseToNum(String fase) {
-    switch (fase) {
-      case 'semilla': return '1';
-      case 'arbusto': return '2';
-      case 'planta':  return '3';
-      case 'ent':     return '4';
-      default:        return '2';
-    }
-  }
-
-  List<String> _buildImageCandidates(String plantId, String faseNum) {
-    final candidates = <String>[];
-    candidates.add('Planta/$plantId/fase${faseNum}_ss.png');
-    final lowerId = plantId.toLowerCase();
-    for (final folders in _plantTypeFolders.values) {
-      for (final folder in folders) {
-        if (lowerId.contains(folder.toLowerCase()) ||
-            folder.toLowerCase().contains(lowerId)) {
-          candidates.add('Planta/$folder/fase${faseNum}_ss.png');
-        }
-      }
-    }
-    candidates.add('Planta/Pasto/fase${faseNum}_ss.png');
-    return candidates;
-  }
-
-  String _getPlantCategory(String plantId) {
-    final lowerId = plantId.toLowerCase();
-    if (lowerId.contains('alcaparro enano') || lowerId.contains('dividivi')) {
-      return 'xerofito';
-    }
-    if (lowerId.contains('alcaparro') || lowerId.contains('cajeto') ||
-        lowerId.contains('espino') || lowerId.contains('drago')) {
-      return 'solar';
-    }
-    if (lowerId.contains('manzano') || lowerId.contains('mangle') ||
-        lowerId.contains('sietecueros') || lowerId.contains('cedro')) {
-      return 'templado';
-    }
-    if (lowerId.contains('roble') || lowerId.contains('pino') ||
-        lowerId.contains('nogal') || lowerId.contains('duraznillo')) {
-      return 'montana';
-    }
-    if (lowerId.contains('aliso') || lowerId.contains('cedrillo') ||
-        lowerId.contains('cucharo')) {
-      return 'hidro';
-    }
-    return 'pasto';
-  }
-
   String _getCategoryIconPath(String plantId) {
-    switch (_getPlantCategory(plantId)) {
+    switch (PlantCatalog.typeOf(plantId)) {
       case 'solar': return 'Botones/Boton_Categoría_01.png';
       case 'xerofito': return 'Botones/Boton_Categoría_02.png';
       case 'templado': return 'Botones/Boton_Categoría_03.png';
@@ -243,13 +124,6 @@ class InventoryScreen extends FlameGame with DragCallbacks {
       case 'ent': return 'Botones/Boton_Estado_04.png';
       default: return 'Botones/Boton_Estado_01.png';
     }
-  }
-
-  String _getUrgencyIconPath(int sol, int agua) {
-    final minValue = sol < agua ? sol : agua;
-    if (minValue <= 0) return 'Botones/Boton_Urgencia_03.png';
-    if (minValue <= 3) return 'Botones/Boton_Urgencia_02.png';
-    return 'Botones/Boton_Urgencia_01.png';
   }
 
  String _getTrafficLightIconPath(int sol, int agua) {
@@ -332,11 +206,11 @@ class InventoryScreen extends FlameGame with DragCallbacks {
       final int row = i ~/ _columns;
       final double x = _colToX(col);
       final double y = _rowToBaseY(row);
-      _addPlantSlot(Vector2(x, y), slotSize, slotSize, plants[i], i);
+      _addPlantSlot(Vector2(x, y), slotSize, slotSize, plants[i]);
     }
   }
 
-  List<dynamic> _getFilteredPlants() {
+  List<TreePlanta> _getFilteredPlants() {
     final plants = _controller?.plants ?? [];
 
     return plants.where((plant) {
@@ -345,7 +219,7 @@ class InventoryScreen extends FlameGame with DragCallbacks {
       // CATEGORY
       // -------------------------
       if (_filterCategory != null) {
-        final category = _getPlantCategory(plant.id);
+        final category = PlantCatalog.typeOf(plant.id);
 
         if (category != _filterCategory) {
           return false;
@@ -402,13 +276,13 @@ class InventoryScreen extends FlameGame with DragCallbacks {
   }
 
   void _addPlantSlot(
-      Vector2 pos, double slotW, double slotH, dynamic plant, int index) {
+      Vector2 pos, double slotW, double slotH, TreePlanta plant) {
     final slot = PositionComponent()
       ..position = pos
       ..size = Vector2(slotW, slotH);
 
-    final isSelected = index == _selectedPlantIndex;
-    final isAlive = plant.estado?.fase != 'muerto' && plant.desbloqueada;
+    final isSelected = identical(plant, _selectedPlant);
+    final isAlive = plant.estado.fase != 'muerto' && plant.desbloqueada;
 
     slot.add(SpriteComponent()
       ..sprite = Sprite(images.fromCache(
@@ -419,10 +293,9 @@ class InventoryScreen extends FlameGame with DragCallbacks {
       ..size = Vector2(slotW, slotH));
 
     if (isAlive) {
-      final plantId = plant.id ?? 'pasto';
-      final plantPhase = plant.estado?.fase ?? 'arbusto';
-      final displayName = _getPlantDisplayName(plantId);
-      final imagePath = _getPlantImagePath(plantId, plantPhase);
+      final plantId = plant.id;
+      final plantPhase = plant.estado.fase;
+      final displayName = PlantCatalog.displayName(plantId);
 
       slot.add(TextComponent(
         text: displayName,
@@ -438,41 +311,19 @@ class InventoryScreen extends FlameGame with DragCallbacks {
         ),
       ));
 
-      try {
-        final img = images.fromCache(imagePath);
-        final double plantSize = slotW * 0.4;
-        slot.add(SpriteComponent()
-          ..sprite = Sprite(
-            img,
-            srcPosition: Vector2(0, 0),
-            srcSize: Vector2(img.width / 18, img.height.toDouble()),
-          )
-          ..size = Vector2(plantSize, plantSize)
-          ..anchor = Anchor.center
-          ..position = Vector2(slotW / 2, slotH / 2));
-      } catch (e) {
-        debugPrint(
-            '[Inventory] Error cargando imagen: $imagePath - usando Pasto fallback');
-        final fallbackImg = images.fromCache('Planta/Pasto/fase2_ss.png');
-        final double plantSize = slotW * 0.4;
-        slot.add(SpriteComponent()
-          ..sprite = Sprite(
-            fallbackImg,
-            srcPosition: Vector2(0, 0),
-            srcSize: Vector2(fallbackImg.width / 18, fallbackImg.height.toDouble()),
-          )
-          ..size = Vector2(plantSize, plantSize)
-          ..anchor = Anchor.center
-          ..position = Vector2(slotW / 2, slotH * 0.16));
-      }
+      slot.add(SpriteComponent()
+        ..sprite = _plantSprite(plant)
+        ..size = Vector2.all(slotW * 0.4)
+        ..anchor = Anchor.center
+        ..position = Vector2(slotW / 2, slotH / 2));
 
       final double iconH = slotH * 0.16;
       final double iconY = slotH - iconH - slotH * 0.13;
       const double iconGap = 6.0;
 
       final recursos = plant.recursosAplicados;
-      final sol = recursos?.sol ?? 0;
-      final agua = recursos?.agua ?? 0;
+      final sol = recursos.sol;
+      final agua = recursos.agua;
       final categoryIcon = _getCategoryIconPath(plantId);
       final stageIcon = _getStageIconPath(plantPhase);
       final trafficLightIcon = _getTrafficLightIconPath(sol, agua);
@@ -507,11 +358,11 @@ class InventoryScreen extends FlameGame with DragCallbacks {
       slot.add(_TappableSlot(
         slotSize: Vector2(slotW, slotH),
         gameRef: this,
-        plantIndex: index,
-        onTap: (int i) {
+        plant: plant,
+        onTap: (TreePlanta p) {
           // Solo seleccionar si no se estaba arrastrando
           if (_isDragging) return;
-          _onPlantSelected(i);
+          _onPlantSelected(p);
         },
       )..size = Vector2(slotW, slotH));
     } else {
@@ -534,12 +385,10 @@ class InventoryScreen extends FlameGame with DragCallbacks {
     _plantSlots.add(slot);
   }
 
-  void _onPlantSelected(int index) {
-
-    _selectedPlantIndex = index;
-    _controller?.setActivePlant(index);
+  void _onPlantSelected(TreePlanta plant) {
+    _selectedPlant = plant;
+    _controller?.selectPlant(plant);
     _loadPlantSlots();
-    debugPrint('[Inventory] Planta seleccionada: $index');
   }
 
   void applyCategoryFilter(String? cat) {
@@ -601,7 +450,6 @@ void onDragEnd(DragEndEvent event) {
   super.onDragEnd(event);
   Future.delayed(const Duration(milliseconds: 150), () {
     _isDragging = false;
-    _dragDistance = 0; // resetear distancia acumulada
   });
 }
 }
@@ -612,23 +460,22 @@ void onDragEnd(DragEndEvent event) {
 class _TappableSlot extends PositionComponent with TapCallbacks {
   final Vector2 slotSize;
   final FlameGame gameRef;
-  final int? plantIndex;
-  final Function(int)? onTap;
+  final TreePlanta plant;
+  final void Function(TreePlanta) onTap;
   bool _expanded = false;
 
-  _TappableSlot({required this.slotSize, required this.gameRef, this.plantIndex, this.onTap});
+  _TappableSlot({required this.slotSize, required this.gameRef, required this.plant, required this.onTap});
 
   @override
   void onTapDown(TapDownEvent event) {
     if (_expanded) return;
-    if (plantIndex == null || onTap == null) return;
 
     AudioManager.click();
-    onTap!(plantIndex!);
+    onTap(plant);
     _expanded = true;
     gameRef.add(_ExpandedOverlay(
       gameRef: gameRef,
-      plant: (gameRef as InventoryScreen)._controller!.plants[plantIndex!],
+      plant: plant,
       onClose: () => _expanded = false,
     )..size = gameRef.size);
     event.continuePropagation = false;
@@ -641,7 +488,7 @@ class _TappableSlot extends PositionComponent with TapCallbacks {
 class _ExpandedOverlay extends PositionComponent with TapCallbacks {
   final FlameGame gameRef;
   final VoidCallback onClose;
-  final dynamic plant;
+  final TreePlanta plant;
 
   _ExpandedOverlay({required this.gameRef, required this.onClose, required this.plant});
 
@@ -674,8 +521,8 @@ class _ExpandedOverlay extends PositionComponent with TapCallbacks {
       ..size = Vector2(panelSize, panelSize)
       ..position = Vector2(panelX, panelY));
 
-    final lowerId = plant.id ?? 'pasto';
-    final displayName = (gameRef as InventoryScreen)._getPlantDisplayName(lowerId);
+    final lowerId = plant.id;
+    final displayName = PlantCatalog.displayName(lowerId);
 
     add(TextComponent(
       text: displayName,
@@ -691,14 +538,9 @@ class _ExpandedOverlay extends PositionComponent with TapCallbacks {
       ),
     ));
 
-    final img = gameRef.images.fromCache('Planta/Pasto/fase2_ss.png');
-    final double plantSize = panelSize * 0.32; 
+    final double plantSize = panelSize * 0.32;
     add(SpriteComponent()
-      ..sprite = Sprite(
-        img,
-        srcPosition: Vector2(0, 0),
-        srcSize: Vector2(img.width / 18, img.height.toDouble()),
-      )
+      ..sprite = (gameRef as InventoryScreen)._plantSprite(plant)
       ..size = Vector2(plantSize, plantSize)
       ..anchor = Anchor.center
       ..position = Vector2(gameRef.size.x / 2, panelY + panelSize * 0.50));
@@ -707,7 +549,7 @@ class _ExpandedOverlay extends PositionComponent with TapCallbacks {
     final double iconY = panelY + panelSize - iconH - panelSize * 0.13;
     const double gap = 8.0;
 
-    final fase = plant.estado?.fase ?? 'arbusto';
+    final fase = plant.estado.fase;
     final recursos = plant.recursosAplicados;
     final sol = recursos.sol;
     final agua = recursos.agua;

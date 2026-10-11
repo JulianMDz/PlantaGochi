@@ -1,6 +1,5 @@
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -102,7 +101,7 @@ class SunOverlay extends FlameGame with TapCallbacks {
       // addSun actualiza memoria; saveTree() persiste en SharedPreferences
       // Y exporta al archivo físico si tiene permiso (Regla de Oro).
       controller.addSun(reward);
-      controller.playSunGame(); // Actualizar cooldown
+      controller.markPlayed(Minigame.sun);
       await controller.saveTree();
     } catch (e) {
       debugPrint('[SunOverlay] Error al guardar: $e');

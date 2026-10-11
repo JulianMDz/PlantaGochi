@@ -1,5 +1,5 @@
 name: frontend
-description: "A new Flutter project."
+description: "Plant Imaginatio — juego móvil de cuidado de plantas nativas (Flutter + Flame)."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -74,7 +74,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/Animations/
     - assets/images/Botones/
@@ -83,46 +82,51 @@ flutter:
     - assets/images/Inventario/
     - assets/images/Minijuegos/
     - assets/images/Paneles/
-    # Plantas - paths explícitos para asegurar inclusión en APK
-    # Bases
-    - assets/images/Planta/Pasto/
-    - assets/images/Planta/Aliso/
-    - assets/images/Planta/Cajeto/
-    - assets/images/Planta/Espino/
-    - assets/images/Planta/Roble/
-    - assets/images/Planta/Manzano/
-    - assets/images/Planta/AlcaparroEnano/
-    - assets/images/Planta/Cedrillo/
-    - assets/images/Planta/Mangle/
-    - assets/images/Planta/Drago/
-    - assets/images/Planta/PinoRomeron/
-    - assets/images/Planta/Sietecueros/
-    - assets/images/Planta/Nogal/
-    - assets/images/Planta/Cedro/
-    - assets/images/Planta/Duraznillo/
-    # Variantes numeradas
-    - assets/images/Planta/Roble1/
-    - assets/images/Planta/Manzano1/
-    - assets/images/Planta/Manzano2/
-    - assets/images/Planta/Manzano3/
-    - assets/images/Planta/Manzano4/
-    - assets/images/Planta/Drago1/
-    - assets/images/Planta/Drago2/
-    - assets/images/Planta/Drago3/
-    - assets/images/Planta/Drago6/
-    - assets/images/Planta/Drago7/
+    # Flutter no incluye subcarpetas: cada especie/variante va listada.
     - assets/images/Planta/Alcaparro enano1/
     - assets/images/Planta/Alcaparro enano2/
     - assets/images/Planta/Alcaparro enano3/
     - assets/images/Planta/Alcaparro enano4/
-    - assets/images/Planta/Mangle2/
+    - assets/images/Planta/AlcaparroEnano/
+    - assets/images/Planta/Aliso/
+    - assets/images/Planta/Cajeto/
+    - assets/images/Planta/Cedrillo/
+    - assets/images/Planta/Cedrillo1/
     - assets/images/Planta/Cedrillo2/
+    - assets/images/Planta/Cedro/
+    - assets/images/Planta/Drago/
+    - assets/images/Planta/Drago1/
+    - assets/images/Planta/Drago2/
+    - assets/images/Planta/Drago3/
+    - assets/images/Planta/Drago4/
+    - assets/images/Planta/Drago5/
+    - assets/images/Planta/Drago6/
+    - assets/images/Planta/Drago7/
+    - assets/images/Planta/Duraznillo/
+    - assets/images/Planta/Duraznillo1/
+    - assets/images/Planta/Duraznillo2/
+    - assets/images/Planta/Espino/
+    - assets/images/Planta/Mangle/
+    - assets/images/Planta/Mangle2/
+    - assets/images/Planta/Manzano/
+    - assets/images/Planta/Manzano1/
+    - assets/images/Planta/Manzano2/
+    - assets/images/Planta/Manzano3/
+    - assets/images/Planta/Manzano4/
+    - assets/images/Planta/Nogal/
+    - assets/images/Planta/Pasto/
     - assets/images/Planta/Pino romerón1/
     - assets/images/Planta/Pino romerón2/
     - assets/images/Planta/Pino romerón3/
-    - assets/images/Planta/Duraznillo2/
-    # Sietecueros variantes
+    - assets/images/Planta/PinoRomeron/
+    - assets/images/Planta/Roble/
+    - assets/images/Planta/Roble1/
+    - assets/images/Planta/Sietecueros/
     - assets/images/Planta/Sietecueros1/
+    - assets/images/Planta/Sietecueros10/
+    - assets/images/Planta/Sietecueros11/
+    - assets/images/Planta/Sietecueros12/
+    - assets/images/Planta/Sietecueros13/
     - assets/images/Planta/Sietecueros2/
     - assets/images/Planta/Sietecueros3/
     - assets/images/Planta/Sietecueros4/
@@ -131,24 +135,6 @@ flutter:
     - assets/images/Planta/Sietecueros7/
     - assets/images/Planta/Sietecueros8/
     - assets/images/Planta/Sietecueros9/
-    - assets/images/Planta/Sietecueros10/
-    - assets/images/Planta/Sietecueros11/
-    - assets/images/Planta/Sietecueros12/
-    - assets/images/Planta/AlcaparroEnano/
-    
-    - assets/images/Planta/Aliso/
-    - assets/images/Planta/Cajeto/
-    - assets/images/Planta/Cedrillo/
-    - assets/images/Planta/Drago/
-    - assets/images/Planta/Duraznillo/
-    - assets/images/Planta/Espino/
-    - assets/images/Planta/Mangle/
-    - assets/images/Planta/Manzano/ 
-    - assets/images/Planta/Nogal/
-    - assets/images/Planta/Pasto/
-    - assets/images/Planta/PinoRomeron/
-    - assets/images/Planta/Roble/ 
-    - assets/images/Planta/Sietecueros/
     - assets/audio/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -43,40 +43,6 @@ class TreeStorageService {
   /// Clave SharedPreferences para recursos de Flutter (sol, agua, composta, fertilizante).
   static const String _recursosFlutterKey = 'imaginatio_recursos_flutter';
 
-  /// Field Authority Matrix: mapea cada campo a su propietario (flutter/unity)
-  /// para validación y enforcement en merge/sync.
-  static const Map<String, String> _fieldAuthority = {
-    // Usuario (algunos campos compartidos, otros especializados)
-    'usuario.id': 'flutter',
-    'usuario.nombre': 'flutter',
-    'usuario.nivel': 'unity',
-    'usuario.xp': 'unity',
-    
-    // Recursos (siempre Flutter)
-    'recursos.sol': 'flutter',
-    'recursos.agua': 'flutter',
-    'recursos.composta': 'flutter',
-    'recursos.fertilizante': 'flutter',
-    
-    // Planta - Estado (fase es Flutter, salud/hp es Unity)
-    'planta.estado.fase': 'flutter',
-    'planta.estado.salud': 'unity',
-    'planta.estado.hpActual': 'unity',
-    
-    // Planta - Recursos Aplicados (siempre Flutter)
-    'planta.recursosAplicados.sol': 'flutter',
-    'planta.recursosAplicados.agua': 'flutter',
-    'planta.recursosAplicados.fertilizante': 'flutter',
-    
-    // Planta - Progreso y Uso (siempre Unity)
-    'planta.progreso': 'unity',
-    'planta.uso': 'unity',
-    'planta.visualEstado': 'flutter',
-    
-    // Semillas (siempre Unity, desbloqueadas en 3D)
-    'semillas': 'unity',
-  };
-
   // ── Lectura ───────────────────────────────────────────────────────────────
 
   /// Carga el .tree desde SharedPreferences.

@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
 
 class TextWater extends PositionComponent with HasGameRef {

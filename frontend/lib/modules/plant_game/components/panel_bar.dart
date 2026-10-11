@@ -24,18 +24,18 @@ class PanelLayout extends PositionComponent {
   static const double _gap         = 8.0;   // espacio entre icono y barra
   static const double _rowSpacing  = 38.0;  // separación vertical entre filas
 
-  /// Máximo de recursos_aplicados representado como 100% de la barra.
-  static const double _maxRecurso  = 10.0;
-
   // ── Componentes de barra ───────────────────────────────────────────────────
   late BarraCarga _barraSol;
   late BarraCarga _barraAgua;
   late BarraCarga _barraComposta;
 
+  late final PlantController _controller;
+
   PanelLayout({required this.context});
 
   @override
   Future<void> onLoad() async {
+    _controller = Provider.of<PlantController>(context, listen: false);
     final double barX = _iconSize + _gap;
     final double barCenterY = (_iconSize - _barH) / 2; // centrar barra en fila
 
@@ -83,49 +83,26 @@ class PanelLayout extends PositionComponent {
 
     // Carga inicial y suscripción
     _syncFromController();
-    Provider.of<PlantController>(context, listen: false)
-        .addListener(_syncFromController);
+    _controller.addListener(_syncFromController);
   }
 
   @override
   void onRemove() {
-    try {
-      Provider.of<PlantController>(context, listen: false)
-          .removeListener(_syncFromController);
-    } catch (_) {}
+    _controller.removeListener(_syncFromController);
     super.onRemove();
   }
 
+  /// Barras = recursos aplicados / capacidad de la fase actual.
   void _syncFromController() {
-    debugPrint('[PanelBar] 🔔 _syncFromController appelé (listener activado)');
-    try {
-      // Verificar que el contexto es válido antes de acceder
-      if (context == null) {
-        debugPrint('[PanelBar] ⚠️ Contexto null, saltando sync');
-        return;
-      }
-      
-      final ctrl    = Provider.of<PlantController>(context, listen: false);
-      final applied = ctrl.activePlantResources;
-      debugPrint('[PanelBar] 📊 Recursos obtenidos del controller: sol=${applied.sol}, agua=${applied.agua}, fert=${applied.fertilizante}');
+    final applied = _controller.activePlantResources;
+    final max = _controller.getCurrentPhaseRequirements();
 
-      // Obtener máximos según tipo y fase de la planta activa
-      final maxReqs = ctrl.getCurrentPhaseRequirements();
-      final maxSol = (maxReqs?['sol'] ?? 10).toDouble();
-      final maxAgua = (maxReqs?['agua'] ?? 10).toDouble();
-      final maxFert = (maxReqs?['fertilizante'] ?? 10).toDouble();
-      debugPrint('[PanelBar] 📈 Máximos de fase: sol=$maxSol, agua=$maxAgua, fert=$maxFert');
+    double ratio(int value, String key) =>
+        (value / (max?[key] ?? 10)).clamp(0.0, 1.0);
 
-      // Calcular % de llenado (barra siempre tiene tamaño fijo de _barW)
-      _barraSol.progress = (applied.sol / maxSol).clamp(0.0, 1.0);
-      _barraAgua.progress = (applied.agua / maxAgua).clamp(0.0, 1.0);
-      _barraComposta.progress = (applied.fertilizante / maxFert).clamp(0.0, 1.0);
-      
-      debugPrint('[PanelBar] 📶 Progreso actualizado: sol=${_barraSol.progress.toStringAsFixed(2)}, agua=${_barraAgua.progress.toStringAsFixed(2)}, fert=${_barraComposta.progress.toStringAsFixed(2)}');
-      debugPrint('[PanelBar] ℹ️ El game loop re-renderizará automáticamente');
-    } catch (e) {
-      debugPrint('[PanelBar] ❌ Error en syncFromController: $e');
-    }
+    _barraSol.progress = ratio(applied.sol, 'sol');
+    _barraAgua.progress = ratio(applied.agua, 'agua');
+    _barraComposta.progress = ratio(applied.fertilizante, 'fertilizante');
   }
 }
 

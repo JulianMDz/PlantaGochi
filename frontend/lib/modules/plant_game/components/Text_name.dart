@@ -38,9 +38,7 @@ class textName extends TextComponent with HasGameRef {
   String _getUserName() {
     try {
       final controller = Provider.of<PlantController>(context, listen: false);
-      final nombre = controller.currentTree?.usuario.nombre ??
-          controller.currentUser?.username ??
-          'Jugador';
+      final nombre = controller.currentTree?.usuario.nombre ?? 'Jugador';
       return "Bienvenid@, $nombre";
     } catch (_) {
       return "Bienvenid@, Jugador";
