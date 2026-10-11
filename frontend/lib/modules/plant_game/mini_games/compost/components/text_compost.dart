@@ -1,5 +1,4 @@
 import 'package:flame/components.dart';
-import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
 
 class textCompost extends TextBoxComponent with HasGameRef {
@@ -7,6 +6,8 @@ class textCompost extends TextBoxComponent with HasGameRef {
 
   @override
   Future<void> onLoad() async {
+    await super.onLoad();
+
     // 🔹 Texto de tiempo (arriba)
     tiempoText = TextBoxComponent(
       text: "3 SEC",

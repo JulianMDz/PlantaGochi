@@ -1,257 +1,74 @@
-import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flame/game.dart';
 
-enum PlantStage { seed, bush, tree, ent, dead }
+import 'package:frontend/models/plant_catalog.dart';
 
+enum PlantStage { dead, seed, bush, tree, ent }
+
+/// Planta animada del escenario principal. El sheet se resuelve con
+/// [PlantCatalog.spritePath] y se carga bajo demanda al cambiar de planta/fase.
 class PlantComponent extends SpriteAnimationGroupComponent<PlantStage> {
   final String plantType;
   final int initialStage;
 
-  PlantComponent(
-    this.plantType,
-    this.initialStage,
-    Vector2 position,
-  ) : super(
-          position: position,
-          size: Vector2(250, 250),
-        );
+  PlantComponent(this.plantType, this.initialStage, Vector2 position)
+      : super(position: position, size: Vector2(250, 250));
 
-@override
+  @override
   Future<void> onLoad() async {
-    try {
-      debugPrint('[PlantComponent] 🌿 plantType: $plantType -> folderName: $folderName');
-      final stageEnum = _intToStage(initialStage);
-      final animation = await _loadStageAnimation(stageEnum);
-      animations = {stageEnum: animation};
-      current = stageEnum;
-    } catch (e, stack) {
-      debugPrint('[PlantComponent] ❌ Error en onLoad: $e');
-      debugPrint('[PlantComponent] Stack: $stack');
-      animations = {_intToStage(initialStage): SpriteAnimation(<SpriteAnimationFrame>[], loop: true)};
-    }
+    scale = stageScale;
+    await updatePlant(plantType, initialStage);
   }
 
-  /// Actualiza la planta mostrada y carga sus imágenes bajo demanda
+  /// Muestra [newPlantType] en la fase [newStage] (0 = muerta … 4 = ent).
   Future<void> updatePlant(String newPlantType, int newStage) async {
-    debugPrint('[PlantComponent] 🔄 Actualizando planta: $newPlantType, fase: $newStage');
-    
-    try {
-      final stageEnum = _intToStage(newStage);
-      // Pasar el nuevo tipo de planta para que use el folder correcto
-      animations = {
-        stageEnum: await _loadStageAnimation(stageEnum, newPlantType),
-      };
-      current = stageEnum;
-      debugPrint('[PlantComponent] ✅ Planta actualizada a: $newPlantType');
-    } catch (e, stack) {
-      debugPrint('[PlantComponent] ❌ Error al actualizar planta: $e');
-      // Fallback: mantener animación anterior o asignar animación vacía
-      final stageEnum = _intToStage(newStage);
-      if (animations?[stageEnum] == null) {
-        animations = {stageEnum: SpriteAnimation(<SpriteAnimationFrame>[], loop: true)};
-      }
-    }
+    final stage = PlantStage.values[newStage];
+    animations = {stage: await _loadAnimation(newPlantType, newStage)};
+    current = stage;
   }
 
-  PlantStage get _activeStage => current ?? _intToStage(initialStage);
+  PlantStage get _activeStage => current ?? PlantStage.values[initialStage];
 
   Vector2 get stageOffset {
     switch (_activeStage) {
       case PlantStage.seed:
-        return Vector2(size.x / 2, size.y / 2+120);
-      case PlantStage.bush:
-        return Vector2(size.x / 2, size.y / 2+60);
-      case PlantStage.tree:
-        return Vector2(size.x / 2, size.y / 2+60);
-      case PlantStage.ent:
-        return Vector2(size.x / 2, size.y / 2+60);
+        return Vector2(size.x / 2, size.y / 2 + 120);
       case PlantStage.dead:
-        return Vector2(size.x / 2, size.y / 2+80);
-      default:
-        return Vector2.zero();
+        return Vector2(size.x / 2, size.y / 2 + 80);
+      case PlantStage.bush:
+      case PlantStage.tree:
+      case PlantStage.ent:
+        return Vector2(size.x / 2, size.y / 2 + 60);
     }
   }
 
   Vector2 get stageScale {
     switch (_activeStage) {
+      case PlantStage.dead:
+        return Vector2.all(0.25);
       case PlantStage.seed:
-        return Vector2.all(0.3);
+        return Vector2.all(0.4);
       case PlantStage.bush:
         return Vector2.all(0.5);
       case PlantStage.tree:
         return Vector2.all(0.6);
       case PlantStage.ent:
         return Vector2.all(0.7);
-      case PlantStage.dead:
-        return Vector2.all(0.25);
     }
   }
 
-  PlantStage _intToStage(int stage) {
-    switch (stage) {
-      case 0:
-        return PlantStage.dead;
-      case 1:
-        return PlantStage.seed;
-      case 2:
-        return PlantStage.bush;
-      case 3:
-        return PlantStage.tree;
-      case 4:
-        return PlantStage.ent;
-      default:
-        throw Exception('Fase inválida: $stage');
-    }
-  }
-
-
-  String get folderName {
-    if (plantType.isEmpty) return 'Pasto';
-    
-    final lowerId = plantType.toLowerCase();
-    
-    // XEROFITO
-    if (lowerId.contains('alcaparro enano')) return 'Alcaparro enano';
-    
-    // SOLAR
-    if (lowerId.contains('alcaparro grande')) return 'Alcaparro enano';
-    if (lowerId.contains('cajeto')) return 'Cajeto';
-    if (lowerId.contains('espino')) return 'Espino';
-    if (lowerId.contains('drago')) return 'Drago';
-    
-    // HIDRO
-    if (lowerId.contains('aliso')) return 'Aliso';
-    if (lowerId.contains('cedrillo')) return 'Cedrillo';
-    
-    // MONTAÑA
-    if (lowerId.contains('pino')) return 'Pino romerón';
-    if (lowerId.contains('roble')) return 'Roble';
-    if (lowerId.contains('nogal')) return 'Nogal';
-    if (lowerId.contains('duraznillo')) return 'Duraznillo';
-    
-    // TEMPLADO
-    if (lowerId.contains('manzano')) return 'Manzano';
-    if (lowerId.contains('mangle')) return 'Mangle';
-    if (lowerId.contains('sietecueros')) return 'Sietecueros';
-    if (lowerId.contains('cedro')) return 'Cedro';
-    
-    // BASE
-    if (lowerId.contains('pasto')) return 'Pasto';
-    
-    // Default: Pasto
-    return 'Pasto';
-  }
-
-  Future<SpriteAnimation> _loadStageAnimation(PlantStage stage, [String? overridePlantType]) async {
-    final effectiveType = overridePlantType ?? plantType;
-    final folder = _getFolderName(effectiveType);
-    switch (stage) {
-      case PlantStage.seed:
-        return _loadAnim('$folder/fase1_ss.png', 18);
-
-      case PlantStage.bush:
-        return _loadAnim('$folder/fase2_ss.png', 18);
-
-      case PlantStage.tree:
-        return _loadAnim('$folder/fase3_ss.png', 18);
-
-      case PlantStage.ent:
-        return _loadAnim('$folder/fase4_ss.png', 18);
-
-      case PlantStage.dead:
-        return _loadAnim('$folder/fase0_ss.png', 18);
-    }
-  }
-
-  /// Mapea IDs de planta a nombres de carpetas (versión estática)
-  String _getFolderName(String plantType) {
-    if (plantType.isEmpty) return 'Pasto';
-    
-    final lowerId = plantType.toLowerCase();
-    
-    // XEROFITO
-    if (lowerId.contains('alcaparro enano')) return 'Alcaparro enano';
-    
-    // SOLAR
-    if (lowerId.contains('alcaparro grande')) return 'Alcaparro enano';
-    if (lowerId.contains('cajeto')) return 'Cajeto';
-    if (lowerId.contains('espino')) return 'Espino';
-    if (lowerId.contains('drago')) return 'Drago';
-    
-    // HIDRO
-    if (lowerId.contains('aliso')) return 'Aliso';
-    if (lowerId.contains('cedrillo')) return 'Cedrillo';
-    
-    // MONTAÑA
-    if (lowerId.contains('pino')) return 'Pino romerón';
-    if (lowerId.contains('roble')) return 'Roble';
-    if (lowerId.contains('nogal')) return 'Nogal';
-    if (lowerId.contains('duraznillo')) return 'Duraznillo';
-    
-    // TEMPLADO
-    if (lowerId.contains('manzano')) return 'Manzano';
-    if (lowerId.contains('mangle')) return 'Mangle';
-    if (lowerId.contains('sietecueros')) return 'Sietecueros';
-    if (lowerId.contains('cedro')) return 'Cedro';
-    
-    // BASE
-    if (lowerId.contains('pasto')) return 'Pasto';
-    
-    // Default: Pasto
-    return 'Pasto';
-  }
-
-  Future<SpriteAnimation> _loadAnim(String file, int frames,) async {
-    final imagePath = 'Planta/$file';
-    
-    try {
-      // Usar Flame.images que es el cache global de imágenes
-      final image = await Flame.images.load(imagePath);
-      debugPrint('[PlantComponent] ✅ Cargado: $file');
-      return SpriteAnimation.fromFrameData(
-        image,
-        SpriteAnimationData.sequenced(
-          amount: frames,
-          stepTime: 0.1,
-          textureSize: Vector2(500, 500),
-        ),
-      );
-    } catch (e) {
-      debugPrint('[PlantComponent] ❌ Error cargando $file: $e');
-    }
-    
-    // Si falla, intentar con Pasto como fallback
-    String fallbackFile;
-    if (file.contains('fase1')) {
-      fallbackFile = 'Planta/Pasto/fase1_ss.png';
-    } else if (file.contains('fase3')) {
-      fallbackFile = 'Planta/Pasto/fase3_ss.png';
-    } else if (file.contains('fase4')) {
-      fallbackFile = 'Planta/Pasto/fase4_ss.png';
-    } else {
-      fallbackFile = 'Planta/Pasto/fase2_ss.png';
-    }
-    
-    try {
-      final fallbackImage = await Flame.images.load(fallbackFile);
-      debugPrint('[PlantComponent] ✅ Fallback Pasto cargado');
-      return SpriteAnimation.fromFrameData(
-        fallbackImage,
-        SpriteAnimationData.sequenced(
-          amount: frames,
-          stepTime: 0.1,
-          textureSize: Vector2(500, 500),
-        ),
-      );
-    } catch (e2) {
-      debugPrint('[PlantComponent] ❌ Fallback Pasto también falló: $e2');
-    }
-
-    // Fallback final: animación vacía
-    debugPrint('[PlantComponent] 🎨 Animación vacía (fallback final)');
-    return SpriteAnimation(<SpriteAnimationFrame>[], loop: true);
+  // spritePath solo devuelve rutas presentes en el AssetManifest.
+  static Future<SpriteAnimation> _loadAnimation(String plantId, int phase) async {
+    final image = await Flame.images.load(
+      await PlantCatalog.spritePath(plantId, phase),
+    );
+    return SpriteAnimation.fromFrameData(
+      image,
+      SpriteAnimationData.sequenced(
+        amount: 18,
+        stepTime: 0.1,
+        textureSize: Vector2(500, 500),
+      ),
+    );
   }
 }

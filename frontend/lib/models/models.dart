@@ -1,9 +1,9 @@
-
-import 'dart:convert';
+// Modelo legado del usuario creado en el login (SharedPreferences `user_<id>`).
+// El estado del juego vive en el `.tree` ([TreeData]); este modelo solo
+// aporta id y nombre cuando todavía no existe un `.tree`.
 
 enum PlantType { hidro, solar, xerofito, montana, templado, pasto }
 enum PlantStage { seed, bush, tree, ent }
-enum MinigameTier { bronce, oro, diamante, solar }
 
 class UserResources {
   int sunAmount;
@@ -148,34 +148,4 @@ class UserModel {
         'plants': plants.map((p) => p.toJson()).toList(),
         'resources': resources.toJson(),
       };
-}
-
-class MinigameResult {
-  final String plantId;
-  final String rewardType;
-  final int rewardAmount;
-  final DateTime nextAvailable;
-  final String message;
-  final int compostTotal;
-  final int fertilizerGained;
-
-  MinigameResult({
-    required this.plantId,
-    required this.rewardType,
-    required this.rewardAmount,
-    required this.nextAvailable,
-    required this.message,
-    this.compostTotal = 0,
-    this.fertilizerGained = 0,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'plant_id': plantId,
-    'reward_type': rewardType,
-    'reward_amount': rewardAmount,
-    'next_available': nextAvailable.toIso8601String(),
-    'message': message,
-    'compost_total': compostTotal,
-    'fertilizer_gained': fertilizerGained,
-  };
 }

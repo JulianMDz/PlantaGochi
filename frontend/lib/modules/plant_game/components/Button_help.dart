@@ -58,11 +58,11 @@ class _HelpOverlay extends PositionComponent with TapCallbacks, DragCallbacks {
 
     // Calcular dimensiones
     final imageSprite = await Sprite.load('Paneles/Panel_Ayuda.jpg');
-    _panelW = gameRef.size.x * 0.37;
+    _panelW = gameRef.size.x * 0.5;
     final double imageRatio = imageSprite.srcSize.y / imageSprite.srcSize.x;
     _imageH = _panelW * imageRatio;
 
-    _visibleH = gameRef.size.y * 0.80;
+    _visibleH = gameRef.size.y * 0.90;
     _panelX = (gameRef.size.x - _panelW) / 2;
     _panelY = (gameRef.size.y - _visibleH) / 2;
 
@@ -89,8 +89,6 @@ class _HelpOverlay extends PositionComponent with TapCallbacks, DragCallbacks {
     // Recortar la imagen al área visible usando canvas directamente
     // Se dibuja un rectángulo opaco arriba y abajo del área visible
     // para tapar lo que se sale
-    final paint = Paint()..color = const Color(0x00000000);
-
     // Clip manual — tapa lo que sobresale arriba
     canvas.drawRect(
       Rect.fromLTWH(0, 0, gameRef.size.x, _panelY),

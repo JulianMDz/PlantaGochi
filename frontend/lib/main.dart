@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/audio.dart';
 import 'core/router.dart';
 import 'modules/plant_game/plant_controller.dart';
 import 'services/local_storage_service.dart';
@@ -10,6 +11,8 @@ import 'services/tree_storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AudioManager.init();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
