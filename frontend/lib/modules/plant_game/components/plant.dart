@@ -57,6 +57,8 @@ class PlantComponent extends SpriteAnimationGroupComponent<PlantStage> {
     }
   }
 
+  // Sheets de 18 frames de 500 px en cuadrícula 6×3 (3000×1500): en una sola
+  // fila medían 9000 px y no se dibujaban en GPUs con límite de 8192.
   // spritePath solo devuelve rutas presentes en el AssetManifest.
   static Future<SpriteAnimation> _loadAnimation(String plantId, int phase) async {
     final image = await Flame.images.load(
@@ -66,6 +68,7 @@ class PlantComponent extends SpriteAnimationGroupComponent<PlantStage> {
       image,
       SpriteAnimationData.sequenced(
         amount: 18,
+        amountPerRow: 6,
         stepTime: 0.1,
         textureSize: Vector2(500, 500),
       ),

@@ -42,7 +42,7 @@ class InventoryScreen extends FlameGame with DragCallbacks {
   Sprite _plantSprite(TreePlanta plant) {
     final img = images.fromCache(
         _spritePaths[plant.instanceId] ?? 'Planta/Pasto/fase2_ss.png');
-    return Sprite(img, srcSize: Vector2(img.width / 18, img.height.toDouble()));
+    return Sprite(img, srcSize: Vector2.all(500));
   }
 
   @override

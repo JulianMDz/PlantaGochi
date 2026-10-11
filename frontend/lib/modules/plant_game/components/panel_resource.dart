@@ -30,9 +30,9 @@ class Panel_resource_info extends SpriteComponent {
     add(textComp);
   }
 
+  /// Se puede llamar antes de que termine onLoad: el texto se aplica al cargar.
   void setMessage(String msg) {
-    if (isLoaded) {
-      textComp.text = msg;
-    }
+    info = msg;
+    if (isLoaded) textComp.text = msg;
   }
 }
